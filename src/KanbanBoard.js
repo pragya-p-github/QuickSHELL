@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { VscSettings } from "react-icons/vsc";
-import './TaskCard.css'; // Importing CSS file
+import { VscArrowDown } from "react-icons/vsc";
+import { VscCircleLargeFilled } from "react-icons/vsc";
+import {VscAccount} from 'react-icons/vsc';
+import {VscAdd, VscEllipsis} from 'react-icons/vsc'
+import './TaskCard.css';
 
 
 const API_URL = 'https://api.quicksell.co/v1/internal/frontend-assignment';
@@ -10,6 +14,8 @@ function KanbanBoard() {
   const [tickets, setTickets] = useState([]);
   const [groupingOption, setGroupingOption] = useState('status');
   const [sortingOption, setSortingOption] = useState('priority');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); 
+
 
   useEffect(() => {
     axios.get(API_URL)
@@ -21,7 +27,7 @@ function KanbanBoard() {
       });
   }, []);
 
-  // Function to handle changes in grouping and ordering options
+
   const handleOptionChange = (e) => {
     const optionValue = e.target.value;
     const optionType = e.target.getAttribute('data-option-type');
@@ -33,8 +39,16 @@ function KanbanBoard() {
     }
   };
 
+  
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
-  // Grouping logic based on 'groupingOption'
+  const closeDropdown = () => {
+    setIsDropdownOpen(false);
+  };
+
+
   const groupTickets = () => {
     switch (groupingOption) {
       case 'userId':
@@ -59,7 +73,6 @@ function KanbanBoard() {
     }
   };
 
-  // Group tickets by userId
   const groupByUserId = () => {
     const grouped = {};
     tickets.forEach((ticket) => {
@@ -72,7 +85,6 @@ function KanbanBoard() {
     return grouped;
   };
 
-  // Group tickets by status
   const groupByStatus = () => {
     const grouped = {};
     tickets.forEach((ticket) => {
@@ -84,16 +96,23 @@ function KanbanBoard() {
     });
     return grouped;
   };
+  const priorityNames = {
+    0: 'No Priority',
+    1: 'Low',
+    2: 'Medium',
+    3: 'High',
+    4: 'Urgent',
+  };
 
-  // Group tickets by priority
   const groupByPriority = () => {
     const grouped = {
-      0: [], // No priority
-      1: [], // Low
-      2: [], // Medium
-      3: [], // High
-      4: [], // Urgent
+      0: [],
+      1: [],
+      2: [],
+      3: [],
+      4: [],
     };
+
     tickets.forEach((ticket) => {
       const priority = ticket.priority;
       grouped[priority].push(ticket);
@@ -101,8 +120,7 @@ function KanbanBoard() {
     return grouped;
   };
 
-  // Sort tickets by priority within each group
-  // Sort tickets by priority within each group in descending order
+
   const sortTicketsByPriority = (groupedTickets) => {
     for (const key in groupedTickets) {
       groupedTickets[key].sort((a, b) => b.priority - a.priority);
@@ -110,7 +128,6 @@ function KanbanBoard() {
     return groupedTickets;
   };
 
-  // Sort tickets by title within each group
   const sortTicketsByTitle = (groupedTickets) => {
     for (const key in groupedTickets) {
       groupedTickets[key].sort((a, b) => a.title.localeCompare(b.title));
@@ -118,13 +135,11 @@ function KanbanBoard() {
     return groupedTickets;
   };
 
-
   return (
     <div className="kanban-board">
-      {/* Grouping and Sorting UI controls */}
       <div className="controls">
         <div className="dropdown">
-          <button className='dropdown-btn'><VscSettings className='VscSettings' />Display</button>
+          <button className='dropdown-btn' onClick={toggleDropdown} onBlur={closeDropdown}><VscSettings className='VscSettings' />Display <VscArrowDown></VscArrowDown></button>
           <div className='dropdown-content'>
             <div className="sub-dropdown">
               <div className='sub-drop'>Grouping</div>
@@ -137,19 +152,19 @@ function KanbanBoard() {
                 <option value="status">Status</option>
                 <option value="priority">Priority</option>
               </select>
-              <div className="sub-dropdown">
-                <div className='sub-drop' >Ordering</div>
-                <select
-                  className="sub-dropdown-content"
-                  value={sortingOption}
-                  onChange={handleOptionChange}
-                  data-option-type="ordering"
-                >
-                  <option value="priority">Priority</option>
-                  <option value="title">Title</option>
-                </select>
-              </div>
             </div>
+            <div className="sub-dropdown">
+              <div className='sub-drop'>Ordering</div>
+              <select className="sub-dropdown-content"
+                value={sortingOption}
+                onChange={handleOptionChange}
+                data-option-type="ordering"
+              >
+                <option value="priority">Priority</option>
+                <option value="title">Title</option>
+              </select>
+            </div>
+
           </div>
         </div>
       </div>
@@ -158,20 +173,23 @@ function KanbanBoard() {
         {Object.keys(groupTickets()).map((groupKey) => (
           <div className="column" key={groupKey}>
             <div className="column-header">
-              {groupingOption === 'status' && <div className="status">{groupKey}</div>}
+              {groupingOption === 'status' && <div className="status">{groupKey} 
+              <VscAdd className='addicon'></VscAdd>
+              <VscEllipsis></VscEllipsis>
+              </div>}
               {groupingOption === 'userId' && <div className="user">{groupKey}</div>}
-              {groupingOption === 'priority' && <div className="priority">{groupKey}</div>}
+              {groupingOption === 'priority' && <div className="priority">{priorityNames[groupKey]}</div>}
             </div>
 
             {groupTickets()[groupKey].map((ticket) => (
               <div className="task-card" key={ticket.id}>
                 <div className="task-id">{ticket.id}</div>
                 <div className="task-title">{ticket.title}</div>
-                <div className="task-tag">
-                  <button>
-
-                    <li>{ticket.tag}</li>
-
+                <VscAccount className='accounticon'></VscAccount>
+                <div className='container'>
+                  <button className='task-opt'> ! </button>
+                  <button className="task-tag">
+                    <VscCircleLargeFilled /> {ticket.tag}
                   </button>
                 </div>
               </div>
